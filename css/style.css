@@ -338,10 +338,18 @@ input, select { font-family: inherit; }
 .lb-legend b { color: var(--accent); }
 .lb-row.haspic { cursor: pointer; }
 .lb-week i.ph { position: relative; background: var(--accent); }
-/* 사진 크게 보기 */
-#photoview { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 70; display: flex; align-items: center; justify-content: center; animation: fade .2s; }
-#photoview img { max-width: 94%; max-height: 84%; border-radius: var(--r); object-fit: contain; }
-.pv-close { position: absolute; top: calc(env(safe-area-inset-top) + 16px); right: 18px; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; font-size: 18px; font-weight: 700; }
+/* 사진 갤러리 */
+#photoview { position: fixed; inset: 0; background: rgba(0,0,0,.94); z-index: 70; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fade .2s; }
+#photoview > img { max-width: 92%; max-height: 64%; border-radius: var(--r); object-fit: contain; }
+.pv-close { position: absolute; top: calc(env(safe-area-inset-top) + 16px); right: 18px; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; font-size: 18px; font-weight: 700; z-index: 2; }
+.pv-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; font-size: 26px; font-weight: 700; z-index: 2; display: flex; align-items: center; justify-content: center; }
+.pv-nav.prev { left: 14px; }
+.pv-nav.next { right: 14px; }
+.pv-cap { color: #fff; font-size: 14px; font-weight: 700; margin: 16px 0 0; text-align: center; }
+.pv-strip { display: flex; gap: 8px; overflow-x: auto; max-width: 92%; margin-top: 14px; padding: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.pv-strip::-webkit-scrollbar { display: none; }
+.pv-strip img { width: 54px; height: 54px; object-fit: cover; border-radius: 10px; flex-shrink: 0; opacity: .5; border: 2px solid transparent; cursor: pointer; }
+.pv-strip img.on { opacity: 1; border-color: var(--accent); }
 .cg-tip { text-align: center; color: var(--muted); font-size: 12.5px; margin: 12px 0 2px; }
 .cg-tip b { color: var(--accent); }
 .qd-guide { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 2px 0 14px; }

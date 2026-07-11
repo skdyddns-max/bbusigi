@@ -1036,11 +1036,39 @@ function openQuickDay(ds) {
   draw(); openModal('#quickday');
 }
 
-/* 사진 크게 보기 */
+/* 사진 갤러리 — 이번 주 모두의 인증 사진을 넘겨보기 */
+let galleryPhotos = [], galleryIdx = 0;
+function collectWeekPhotos(ms) {
+  const dow = ['월', '화', '수', '목', '금', '토', '일'];
+  const rows = challengeBoard(ms);
+  const out = [];
+  rows.forEach(r => r.days.forEach((d, i) => { if (d.photo) out.push({ url: d.photo, nick: r.nick || '익명', day: dow[i] }); }));
+  return out;
+}
 function openPhoto(url) {
+  galleryPhotos = collectWeekPhotos(curWeekStart());
+  if (!galleryPhotos.length) galleryPhotos = [{ url, nick: '', day: '' }];
+  const idx = galleryPhotos.findIndex(p => p.url === url);
+  galleryIdx = idx >= 0 ? idx : 0;
+  drawGallery();
   const ov = document.querySelector('#photoview');
-  ov.querySelector('img').src = url;
   ov.hidden = false; document.body.style.overflow = 'hidden';
+}
+function drawGallery() {
+  const ov = document.querySelector('#photoview');
+  const p = galleryPhotos[galleryIdx]; if (!p) return;
+  ov.querySelector('img').src = p.url;
+  ov.querySelector('.pv-cap').textContent = (p.nick ? `${p.nick} · ${p.day}요일` : '') + (galleryPhotos.length > 1 ? `   (${galleryIdx + 1}/${galleryPhotos.length})` : '');
+  const multi = galleryPhotos.length > 1;
+  ov.querySelectorAll('.pv-nav').forEach(b => b.style.display = multi ? '' : 'none');
+  ov.querySelector('.pv-strip').innerHTML = multi ? galleryPhotos.map((g, i) => `<img src="${g.url}" class="${i === galleryIdx ? 'on' : ''}" data-i="${i}" loading="lazy">`).join('') : '';
+  ov.querySelectorAll('.pv-strip img').forEach(im => im.addEventListener('click', () => { galleryIdx = +im.dataset.i; drawGallery(); }));
+  const on = ov.querySelector('.pv-strip img.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+function galleryStep(dir) {
+  if (galleryPhotos.length < 2) return;
+  galleryIdx = (galleryIdx + dir + galleryPhotos.length) % galleryPhotos.length;
+  drawGallery();
 }
 
 function groupSection(joined, ms) {
@@ -1373,6 +1401,8 @@ function init() {
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
   document.querySelectorAll('.modal-back').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModal('#' + b.id); }));
   document.querySelector('#photoview').addEventListener('click', e => { if (e.target.id === 'photoview') closeModal('#photoview'); });
+  document.querySelector('.pv-nav.prev').addEventListener('click', () => galleryStep(-1));
+  document.querySelector('.pv-nav.next').addEventListener('click', () => galleryStep(1));
   // 휴식 타이머 버튼
   document.querySelector('#rest-skip').addEventListener('click', stopRest);
   document.querySelector('#rest-plus').addEventListener('click', () => { restLeft += 15; restTotal = Math.max(restTotal, restLeft); drawRest(); });
