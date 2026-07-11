@@ -1228,6 +1228,7 @@ function renderSettings() {
   const pmeta = [p.region, p.gender, p.age && p.age + '세'].filter(Boolean).join(' · ');
   el.innerHTML = `
     <header class="tab-head"><div class="th-left"><span class="kicker">Settings</span><h2>설정</h2></div></header>
+    <button id="s-help" class="help-btn">📖 사용법 · 도움말 보기<span>운동뿌시기 쓰는 법이 궁금하면 여기!</span></button>
     <div class="set-group">
       <div class="set-item">내 프로필
         <button id="s-profile" class="pill-btn ghost">${p.nick ? esc(p.nick) + (pmeta ? ` · ${esc(pmeta)}` : '') : '설정하기'}</button>
@@ -1254,6 +1255,7 @@ function renderSettings() {
       <input id="s-file" type="file" accept="application/json" hidden>
     </div>
     <p class="ver">${BRAND.emoji} ${BRAND.name} v${APP_VER}</p>`;
+  el.querySelector('#s-help').addEventListener('click', openHelp);
   el.querySelector('#s-profile').addEventListener('click', openProfile);
   el.querySelector('#s-goal').addEventListener('change', e => { state.settings.weeklyGoal = +e.target.value; saveState(); });
   el.querySelector('#s-rest').addEventListener('change', e => { state.settings.restDefault = +e.target.value; saveState(); });
@@ -1439,10 +1441,44 @@ function showWelcome() {
       <div class="wc-step"><span class="wc-num">2</span><div><b>세트마다 체크</b><span>무게·횟수 입력 후 오른쪽 체크를 탭!</span></div><span class="wc-ic">✅</span></div>
       <div class="wc-step"><span class="wc-num">3</span><div><b>기록·통계·챌린지</b><span>성장 그래프와 친구 인증까지</span></div><span class="wc-ic">🏅</span></div>
     </div>
-    <button id="wc-start" class="big-btn">시작하기</button>`;
+    <button id="wc-start" class="big-btn">시작하기</button>
+    <button id="wc-help" class="text-btn">📖 사용법 자세히 보기</button>`;
   m.querySelector('#wc-start').addEventListener('click', () => {
     state.onboarded = true; saveState(); closeModal('#welcome');
   });
+  m.querySelector('#wc-help')?.addEventListener('click', () => { state.onboarded = true; saveState(); closeModal('#welcome'); openHelp(); });
   openModal('#welcome');
+}
+
+/* 사용법 · 도움말 */
+function openHelp() {
+  const m = document.querySelector('#help');
+  const sec = (ic, title, body) => `<div class="help-sec"><h3><span class="help-ic">${ic}</span>${title}</h3>${body}</div>`;
+  const step = arr => `<ol class="help-steps">${arr.map(s => `<li>${s}</li>`).join('')}</ol>`;
+  m.querySelector('#help-body').innerHTML = `
+    <p class="help-lead">운동뿌시기, 이렇게 쓰면 돼요! 1분이면 익혀요 👇</p>
+    ${sec('📲', '앱 설치 (한 번만)', `<p>브라우저에서 아래 <b>공유 버튼</b> → <b>"홈 화면에 추가"</b> 하면 앱처럼 아이콘이 생겨요. 매번 주소 안 쳐도 돼요.</p>`)}
+    ${sec('🏋️', '운동 기록하기', step([
+      '홈에서 <b>＋ 운동 시작하기</b>',
+      '<b>＋ 운동 추가</b> → 부위 고르고 운동 선택',
+      '무게·횟수 입력 → 세트 끝나면 오른쪽 <b>체크(✓)</b> 탭 (휴식 타이머 자동!)',
+      '다 하면 오른쪽 위 <b>완료</b>'
+    ]))}
+    ${sec('✅', '간편 인증 (시간만 톡!)', `<p>세트 기록이 귀찮으면 — <b>챌린지 탭</b>에서 <b>요일 칸을 눌러</b> 그날 운동시간만 입력해도 인증돼요. 사진도 함께 올릴 수 있어요.</p>`)}
+    ${sec('🏅', '그룹 챌린지 (친구랑 같이)', step([
+      '<b>챌린지 탭</b> → 프로필(닉네임) 설정',
+      '받은 <b>코드</b>를 "참여"에 입력 (또는 "챌린지 만들기"로 코드 생성)',
+      '요일 눌러 <b>시간 + 사진</b>으로 인증',
+      '<b>리더보드</b>(순위)와 <b>출석부</b>(전체 표)에서 서로 확인!'
+    ]))}
+    ${sec('📷', '사진 인증 = 순위 UP', `<p>인증할 때 <b>사진</b>을 올리면 <b>순위 +1점</b> 🔥 올린 사진은 <b>출석부</b>에 썸네일로 뜨고, 아무 사진이나 누르면 <b>모두의 인증 사진</b>을 넘겨볼 수 있어요.</p>`)}
+    ${sec('📊', '통계·기록', `<p><b>통계 탭</b>에서 성장 그래프·개인기록(PR)·근육 히트맵을, <b>기록 탭</b>에서 달력으로 지난 운동을 볼 수 있어요.</p>`)}
+    ${sec('❓', '자주 묻는 질문', `
+      <p><b>Q. 기록이 사라지나요?</b><br>이 기기에 자동 저장돼요. 챌린지에 참여하면 그룹 기록도 클라우드에 동기화됩니다.</p>
+      <p><b>Q. 인터넷 없어도 되나요?</b><br>내 운동 기록은 오프라인에서도 돼요. 그룹 챌린지·사진만 인터넷이 필요해요.</p>
+      <p><b>Q. 무료인가요?</b><br>네, 완전 무료예요 💪</p>`)}
+    <button id="help-close" class="big-btn">알겠어요!</button>`;
+  m.querySelector('#help-close').addEventListener('click', () => closeModal('#help'));
+  openModal('#help');
 }
 document.addEventListener('DOMContentLoaded', init);

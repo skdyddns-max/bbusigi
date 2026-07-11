@@ -443,6 +443,22 @@ input, select { font-family: inherit; }
 .wc-step span { color: var(--muted); font-size: 13px; }
 .wc-step .wc-ic { font-size: 22px; margin-left: auto; }
 
+/* ===== 사용법 · 도움말 ===== */
+.help-btn { width: 100%; text-align: left; padding: 16px 18px; border-radius: var(--r); background: var(--accent-soft); border: 1px solid rgba(255,122,89,.35); color: var(--accent); font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+.help-btn span { display: block; color: var(--muted); font-weight: 500; font-size: 12.5px; margin-top: 3px; }
+.help-lead { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 2px 0 18px; font-weight: 600; }
+.help-sec { margin-bottom: 20px; }
+.help-sec h3 { font-size: 17px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.help-ic { font-size: 20px; }
+.help-sec p { color: var(--muted); font-size: 14px; line-height: 1.65; margin: 6px 0; }
+.help-sec p b { color: var(--text); }
+.help-steps { margin: 6px 0 0; padding-left: 0; list-style: none; counter-reset: hstep; }
+.help-steps li { position: relative; padding: 8px 0 8px 34px; color: var(--muted); font-size: 14px; line-height: 1.5; counter-increment: hstep; border-top: 1px solid var(--line); }
+.help-steps li:first-child { border-top: none; }
+.help-steps li::before { content: counter(hstep); position: absolute; left: 0; top: 7px; width: 24px; height: 24px; border-radius: 50%; background: var(--card2); color: var(--accent); font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.help-steps li b { color: var(--text); }
+#help .big-btn { margin-top: 6px; }
+
 /* ===== 애니메이션 ===== */
 .set-row.flash { animation: setPop .45s cubic-bezier(.2,.8,.3,1.2); }
 @keyframes setPop { 0% { transform: scale(1); } 35% { transform: scale(1.03); background: rgba(91,224,176,.18); } 100% { transform: scale(1); } }
