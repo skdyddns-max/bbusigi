@@ -295,10 +295,53 @@ input, select { font-family: inherit; }
 .cg-cell.on span.we { color: rgba(6,41,31,.72); }
 .cg-cell b { font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .cg-cell.on b { color: var(--mint-ink); }
+.cg-cell { position: relative; }
 .cg-cell.edit { cursor: pointer; }
 .cg-cell.edit:not(.on) b { color: var(--accent); }
 .cg-cell.edit:active { transform: scale(.95); }
 .cg-cell.future { opacity: .4; }
+.cg-cam { position: absolute; top: 3px; right: 4px; font-size: 10px; font-style: normal; filter: grayscale(0); }
+/* 빠른 인증 사진 UI */
+.qd-photo { margin-top: 16px; }
+.qd-photobtn { width: 100%; padding: 15px; border-radius: var(--r); background: var(--accent-soft); border: 1.5px dashed rgba(255,122,89,.45); color: var(--accent); font-weight: 800; font-size: 15px; }
+.qd-photobtn small { font-weight: 500; opacity: .8; }
+.qd-thumb { position: relative; }
+.qd-thumb img { width: 100%; max-height: 260px; object-fit: cover; border-radius: var(--r); display: block; }
+.qd-thumb button { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.65); color: #fff; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 700; }
+/* 리더보드 사진 */
+/* 리더보드/출석부 토글 */
+.ch-seg { display: flex; gap: 5px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin: 0 0 14px; }
+.ch-seg button { flex: 1; padding: 11px; border-radius: 999px; background: none; color: var(--muted); font-weight: 800; font-size: 14px; }
+.ch-seg button.on { background: var(--card2); color: var(--text); box-shadow: var(--sh-1); }
+/* 출석부 표 */
+.att-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); }
+.att { border-collapse: collapse; width: 100%; }
+.att th, .att td { text-align: center; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+.att thead th { font-size: 12px; color: var(--muted); font-weight: 700; padding: 11px 4px; background: var(--bg-elev); }
+.att thead th.we { color: var(--accent); }
+.att-name { text-align: left !important; padding: 10px 12px !important; min-width: 100px; position: sticky; left: 0; background: var(--card); z-index: 1; }
+.att thead .att-name { background: var(--bg-elev); }
+.att-name b { font-size: 14px; display: block; font-weight: 700; }
+.att-name small { font-size: 10px; color: var(--faint); }
+.att tbody tr.me .att-name { color: var(--accent); }
+.att tbody tr.me .att-name b { color: var(--accent); }
+.att-cell { width: 56px; height: 58px; position: relative; font-size: 12px; color: var(--faint); }
+.att-cell.has { background: rgba(91,224,176,.12); color: var(--mint); font-weight: 800; }
+.att-cell.ph { padding: 0; cursor: pointer; }
+.att-cell.ph img { width: 100%; height: 58px; object-fit: cover; display: block; }
+.att-cell.ph span { position: absolute; bottom: 2px; left: 0; right: 0; font-size: 10px; color: #fff; text-shadow: 0 1px 3px #000; font-weight: 800; }
+.att-sum { min-width: 62px; padding: 8px 6px !important; background: var(--bg-elev); }
+.att-sum b { font-size: 13px; display: block; }
+.att-sum small { font-size: 10px; color: var(--faint); display: block; }
+.att-sum i { font-style: normal; font-size: 10px; color: var(--accent); }
+.lb-legend { color: var(--muted); font-size: 12px; margin: -4px 2px 12px; }
+.lb-legend b { color: var(--accent); }
+.lb-row.haspic { cursor: pointer; }
+.lb-week i.ph { position: relative; background: var(--accent); }
+/* 사진 크게 보기 */
+#photoview { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 70; display: flex; align-items: center; justify-content: center; animation: fade .2s; }
+#photoview img { max-width: 94%; max-height: 84%; border-radius: var(--r); object-fit: contain; }
+.pv-close { position: absolute; top: calc(env(safe-area-inset-top) + 16px); right: 18px; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; font-size: 18px; font-weight: 700; }
 .cg-tip { text-align: center; color: var(--muted); font-size: 12.5px; margin: 12px 0 2px; }
 .cg-tip b { color: var(--accent); }
 .qd-guide { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 2px 0 14px; }

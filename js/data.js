@@ -111,6 +111,7 @@ function emptyState() {
     sessions: [],          // [{id, date, start, end, secs, entries:[{exId,name,part,type,sets:[{w,r,done,t}]}], note}]
     body: [],              // [{id, date, weight, chest, waist, arm, thigh, note}] (미사용)
     manualDays: {},        // 빠른 인증: {'YYYY-MM-DD': secs} — 세트 없이 시간만 입력
+    dayPhotos: {},         // 사진 인증: {'YYYY-MM-DD': 공개URL} — 순위 +1점
     onboarded: false,      // 첫 사용 온보딩 완료 여부
     settings: { restDefault: 90, weeklyGoal: 3 },
     // account: {code, lastSync}    // 개인 기기 동기화 (sync.js)
@@ -258,18 +259,27 @@ function dayTimeMap() {
 /* 특정 주(월요일 시작)의 내 인증 요약 */
 function myWeekSummary(weekStartDate, map) {
   map = map || dayTimeMap();
+  const photos = state.dayPhotos || {};
   const ms = weekStartDate || mondayStart();
   const days = [];
-  for (let i = 0; i < 7; i++) { const d = new Date(ms); d.setDate(d.getDate() + i); const ds = todayStr(d); days.push({ date: ds, secs: map[ds] || 0 }); }
-  const workoutDays = days.filter(d => d.secs > 0).length;
+  for (let i = 0; i < 7; i++) { const d = new Date(ms); d.setDate(d.getDate() + i); const ds = todayStr(d); days.push({ date: ds, secs: map[ds] || 0, photo: photos[ds] || null }); }
+  const workoutDays = days.filter(d => d.secs > 0 || d.photo).length;  // 시간 또는 사진이 있으면 인증일
+  const photoDays = days.filter(d => d.photo).length;
   const totalSecs = days.reduce((a, d) => a + d.secs, 0);
   const goal = state.settings.weeklyGoal || 3;
-  return { start: todayStr(ms), days, workoutDays, totalSecs, goal, done: workoutDays >= goal };
+  return { start: todayStr(ms), days, workoutDays, photoDays, totalSecs, goal, done: workoutDays >= goal, score: workoutDays + photoDays };
 }
 /* 최근 N주치 날짜→초 (챌린지 푸시용, 가벼운 요약) */
 function recentDayTimes(weeks) {
   const map = dayTimeMap(), out = {};
   const cut = mondayStart(); cut.setDate(cut.getDate() - 7 * ((weeks || 8) - 1));
   Object.keys(map).forEach(ds => { if (new Date(ds) >= cut) out[ds] = map[ds]; });
+  return out;
+}
+/* 최근 N주치 사진 URL (챌린지 푸시용) */
+function recentDayPhotos(weeks) {
+  const p = state.dayPhotos || {}, out = {};
+  const cut = mondayStart(); cut.setDate(cut.getDate() - 7 * ((weeks || 8) - 1));
+  Object.keys(p).forEach(ds => { if (new Date(ds) >= cut) out[ds] = p[ds]; });
   return out;
 }

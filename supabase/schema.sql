@@ -25,3 +25,11 @@ alter table repbloom_challenge enable row level security;
 create policy "ch read"   on repbloom_challenge for select using (true);
 create policy "ch insert" on repbloom_challenge for insert with check (true);
 create policy "ch update" on repbloom_challenge for update using (true) with check (true);
+
+-- 사진 인증용 공개 스토리지 버킷
+insert into storage.buckets (id, name, public)
+values ('repbloom-photos', 'repbloom-photos', true)
+on conflict (id) do nothing;
+create policy "rb photo read"   on storage.objects for select using (bucket_id = 'repbloom-photos');
+create policy "rb photo insert" on storage.objects for insert with check (bucket_id = 'repbloom-photos');
+create policy "rb photo update" on storage.objects for update using (bucket_id = 'repbloom-photos') with check (bucket_id = 'repbloom-photos');

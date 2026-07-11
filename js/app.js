@@ -880,6 +880,7 @@ function drawBodyChart(logs) {
 /* ===== 챌린지(운동 인증) 탭 ===== */
 let chWeek = 0;        // 0=이번주, -1=지난주…
 let chMembers = null;  // 그룹 멤버 캐시 [{member, data}]
+let chView = 'board';  // 'board'(리더보드) | 'sheet'(출석부)
 
 function weekLabel(ms) {
   const e = new Date(ms); e.setDate(e.getDate() + 6);
@@ -921,6 +922,8 @@ function renderChallenge() {
   el.querySelector('#ch-refresh')?.addEventListener('click', () => { if (typeof challengePull === 'function') challengePull(); });
   el.querySelector('#ch-leave')?.addEventListener('click', () => (typeof challengeLeave === 'function') && challengeLeave());
   el.querySelectorAll('.cg-cell[data-day]').forEach(c => c.addEventListener('click', () => openQuickDay(c.dataset.day)));
+  el.querySelectorAll('[data-photo]').forEach(x => x.addEventListener('click', ev => { ev.stopPropagation(); openPhoto(x.dataset.photo); }));
+  el.querySelectorAll('.ch-seg button').forEach(b => b.addEventListener('click', () => { chView = b.dataset.view; renderChallenge(); }));
   animateCounts(el);
   if (joined && typeof challengePull === 'function' && typeof challengeReady === 'function' && challengeReady()) challengePull();
 }
@@ -930,9 +933,10 @@ function myCertCard(sum) {
   const today = todayStr();
   const cells = sum.days.map((d, i) => {
     const editable = d.date <= today;
-    const val = fmtHM(d.secs) || (editable ? '＋' : '·');
-    return `<div class="cg-cell ${d.secs ? 'on' : ''} ${editable ? 'edit' : 'future'}" ${editable ? `data-day="${d.date}"` : ''}>
-      <span class="${i >= 5 ? 'we' : ''}">${dow[i]}</span><b>${val}</b></div>`;
+    const cert = d.secs > 0 || d.photo;
+    const val = fmtHM(d.secs) || (d.photo ? '📷' : (editable ? '＋' : '·'));
+    return `<div class="cg-cell ${cert ? 'on' : ''} ${editable ? 'edit' : 'future'}" ${editable ? `data-day="${d.date}"` : ''}>
+      ${d.photo ? '<i class="cg-cam">📷</i>' : ''}<span class="${i >= 5 ? 'we' : ''}">${dow[i]}</span><b>${val}</b></div>`;
   }).join('');
   const badge = sum.done ? '<span class="cert-badge done">달성 ✓</span>' : '<span class="cert-badge miss">미달성</span>';
   const pct = Math.min(100, Math.round(sum.workoutDays / sum.goal * 100));
@@ -947,29 +951,96 @@ function myCertCard(sum) {
     </div></div>`;
 }
 
-/* 빠른 인증 — 요일 탭 → 운동시간만 입력 */
+/* 이미지 압축 (canvas 리사이즈 → JPEG) */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 900; let w = img.width, h = img.height;
+      if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
+      else if (h > max) { w = Math.round(w * max / h); h = max; }
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      cv.toBlob(b => b ? resolve(b) : reject(new Error('blob')), 'image/jpeg', 0.72);
+    };
+    img.onerror = reject; img.src = URL.createObjectURL(file);
+  });
+}
+/* Supabase Storage에 사진 업로드 → 공개 URL */
+async function uploadDayPhoto(blob, ds) {
+  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url) throw new Error('no-supabase');
+  const code = (state.challenge && state.challenge.code) || 'solo';
+  const path = `${code}/${deviceId()}/${ds}.jpg`;
+  const res = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/repbloom-photos/${path}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_CONFIG.anonKey, Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+    body: blob,
+  });
+  if (!res.ok) throw new Error('upload-' + res.status);
+  return `${SUPABASE_CONFIG.url}/storage/v1/object/public/repbloom-photos/${path}?t=${Date.now()}`;
+}
+
+/* 빠른 인증 — 요일 탭 → 운동시간 + (선택)사진 */
 function openQuickDay(ds) {
   const m = document.querySelector('#quickday');
   const d = new Date(ds), wd = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
   const cur = (state.manualDays && state.manualDays[ds]) || 0;
+  const curPhoto = (state.dayPhotos && state.dayPhotos[ds]) || null;
   const presets = [[30, '30분'], [45, '45분'], [60, '1시간'], [90, '1시간 30분'], [120, '2시간']];
+  let picked = null, removePhoto = false, busy = false;
   m.querySelector('.modal-head h3').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 (${wd}) 인증`;
-  m.querySelector('#qd-body').innerHTML = `
-    <p class="qd-guide">이 날 운동한 시간을 눌러 바로 인증하세요.<br>세트로 기록한 시간이 있으면 둘 중 큰 값으로 반영돼요.</p>
-    <div class="qd-presets">${presets.map(p => `<button class="qd-chip ${cur === p[0] * 60 ? 'on' : ''}" data-min="${p[0]}">${p[1]}</button>`).join('')}</div>
-    <label>직접 입력 (분)<input id="qd-custom" type="number" inputmode="numeric" placeholder="예: 75" value="${cur ? Math.round(cur / 60) : ''}"></label>
-    <button id="qd-save" class="big-btn">인증하기</button>
-    ${cur ? '<button id="qd-clear" class="text-btn danger">이 날 인증 지우기</button>' : ''}`;
-  const save = mins => {
+  const draw = () => {
+    const shownPhoto = removePhoto ? null : (picked ? URL.createObjectURL(picked) : curPhoto);
+    m.querySelector('#qd-body').innerHTML = `
+      <p class="qd-guide">이 날 운동한 시간을 눌러 인증하세요. <b>사진을 올리면 순위 +1점 🔥</b></p>
+      <div class="qd-presets">${presets.map(p => `<button class="qd-chip ${cur === p[0] * 60 ? 'on' : ''}" data-min="${p[0]}">${p[1]}</button>`).join('')}</div>
+      <label>직접 입력 (분)<input id="qd-custom" type="number" inputmode="numeric" placeholder="예: 75" value="${cur ? Math.round(cur / 60) : ''}"></label>
+      <div class="qd-photo">
+        ${shownPhoto ? `<div class="qd-thumb"><img src="${shownPhoto}" alt="인증 사진"><button id="qd-photodel" type="button">✕ 사진 삭제</button></div>`
+          : `<button id="qd-photobtn" type="button" class="qd-photobtn">📷 사진 인증 추가 <small>(선택)</small></button>`}
+        <input id="qd-file" type="file" accept="image/*" capture="environment" hidden>
+      </div>
+      <button id="qd-save" class="big-btn">${busy ? '올리는 중…' : '인증하기'}</button>
+      ${(cur || curPhoto) ? '<button id="qd-clear" class="text-btn danger">이 날 인증 전체 지우기</button>' : ''}`;
+    m.querySelectorAll('.qd-chip').forEach(b => b.addEventListener('click', () => doSave(+b.dataset.min)));
+    m.querySelector('#qd-save').addEventListener('click', () => doSave(parseInt(m.querySelector('#qd-custom').value) || 0));
+    m.querySelector('#qd-clear')?.addEventListener('click', () => clearDay());
+    m.querySelector('#qd-photobtn')?.addEventListener('click', () => m.querySelector('#qd-file').click());
+    m.querySelector('#qd-photodel')?.addEventListener('click', () => { picked = null; removePhoto = true; draw(); });
+    m.querySelector('#qd-file').addEventListener('change', e => { if (e.target.files[0]) { picked = e.target.files[0]; removePhoto = false; draw(); } });
+  };
+  const applyPhoto = async () => {
+    if (removePhoto) { if (state.dayPhotos) delete state.dayPhotos[ds]; return; }
+    if (!picked) return;
+    const blob = await compressImage(picked);
+    const url = await uploadDayPhoto(blob, ds);
+    if (!state.dayPhotos) state.dayPhotos = {};
+    state.dayPhotos[ds] = url;
+  };
+  const doSave = async mins => {
+    if (busy) return;
+    busy = true; draw();
+    try { await applyPhoto(); }
+    catch (e) { busy = false; draw(); alert('사진 업로드에 실패했어요. 잠시 후 다시 시도해주세요.\n(' + (e.message || e) + ')'); return; }
     if (!state.manualDays) state.manualDays = {};
     if (mins > 0) state.manualDays[ds] = mins * 60; else delete state.manualDays[ds];
     saveState(); closeModal('#quickday'); renderChallenge();
-    toast(mins > 0 ? '인증 완료! 💪' : '인증을 지웠어요');
+    toast('인증 완료! 💪');
   };
-  m.querySelectorAll('.qd-chip').forEach(b => b.addEventListener('click', () => save(+b.dataset.min)));
-  m.querySelector('#qd-save').addEventListener('click', () => save(parseInt(m.querySelector('#qd-custom').value) || 0));
-  m.querySelector('#qd-clear')?.addEventListener('click', () => save(0));
-  openModal('#quickday');
+  const clearDay = () => {
+    if (!confirm('이 날 인증(시간·사진)을 모두 지울까요?')) return;
+    if (state.manualDays) delete state.manualDays[ds];
+    if (state.dayPhotos) delete state.dayPhotos[ds];
+    saveState(); closeModal('#quickday'); renderChallenge(); toast('인증을 지웠어요');
+  };
+  draw(); openModal('#quickday');
+}
+
+/* 사진 크게 보기 */
+function openPhoto(url) {
+  const ov = document.querySelector('#photoview');
+  ov.querySelector('img').src = url;
+  ov.hidden = false; document.body.style.overflow = 'hidden';
 }
 
 function groupSection(joined, ms) {
@@ -981,35 +1052,68 @@ function groupSection(joined, ms) {
       <div class="fam-join"><input id="ch-code" maxlength="6" placeholder="참여 코드 6자리" autocapitalize="characters" autocomplete="off"><button id="ch-join" class="pill-btn ghost">참여</button></div>`;
   }
   const rows = challengeBoard(ms);
-  return `<h3 class="sec-title">리더보드 <small>코드 ${state.challenge.code} · ${rows.length}명</small></h3>
-    <div class="lb-list">${rows.map(lbRow).join('')}</div>
-    <div class="rt-btns" style="margin-top:12px"><button id="ch-refresh" class="pill-btn ghost">새로고침</button><button id="ch-leave" class="text-btn danger" style="width:auto;padding:8px 14px">나가기</button></div>`;
+  const seg = `<div class="ch-seg">
+    <button class="${chView === 'board' ? 'on' : ''}" data-view="board">🏆 리더보드</button>
+    <button class="${chView === 'sheet' ? 'on' : ''}" data-view="sheet">📋 출석부</button></div>`;
+  const body = chView === 'sheet'
+    ? attSheet(rows)
+    : `<p class="lb-legend">순위 = 운동일 + <b>📷사진(1일당 +1점)</b> · 📷 탭하면 사진 보기</p>
+       <div class="lb-list">${rows.map(lbRow).join('')}</div>`;
+  return `<h3 class="sec-title">우리 그룹 <small>코드 ${state.challenge.code} · ${rows.length}명</small></h3>
+    ${seg}
+    ${body}
+    <div class="rt-btns" style="margin-top:14px"><button id="ch-refresh" class="pill-btn ghost">새로고침</button><button id="ch-leave" class="text-btn danger" style="width:auto;padding:8px 14px">나가기</button></div>`;
 }
 
-/* 리더보드 행 계산: 멤버별 주간 요약 + 랭크 */
+/* 출석부 — 멤버 × 요일 표 (사진 썸네일 = 한눈에 모두 보기) */
+function attSheet(rows) {
+  const dow = ['월', '화', '수', '목', '금', '토', '일'];
+  const head = `<tr><th class="att-name">멤버</th>${dow.map((d, i) => `<th class="${i >= 5 ? 'we' : ''}">${d}</th>`).join('')}<th class="att-sum">합계</th></tr>`;
+  const body = rows.map(r => {
+    const meta = [r.region, r.gender, r.age && r.age + '세'].filter(Boolean).join('·');
+    const cells = r.days.map(d => {
+      if (d.photo) return `<td class="att-cell has ph" data-photo="${d.photo}"><img src="${d.photo}" loading="lazy" alt=""><span>${fmtHM(d.secs) || '📷'}</span></td>`;
+      if (d.secs) return `<td class="att-cell has"><span>${fmtHM(d.secs)}</span></td>`;
+      return `<td class="att-cell"></td>`;
+    }).join('');
+    return `<tr class="${r.isMe ? 'me' : ''}"><td class="att-name"><b>${esc(r.nick || '익명')}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</td>${cells}<td class="att-sum"><b>${r.cnt}회</b><small>${fmtHM(r.total) || '0:00'}</small>${r.photoCnt ? `<i>📷${r.photoCnt}</i>` : ''}</td></tr>`;
+  }).join('');
+  return `<div class="att-wrap"><table class="att"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    <p class="lb-legend">📷 사진을 눌러 크게 보기 · <b>사진 올리면 그 날 출석 + 순위 +1점</b></p>`;
+}
+
+/* 리더보드 행 계산: 멤버별 주간 요약 + 점수(운동일+사진) 랭크 */
 function challengeBoard(ms) {
   let members = [];
   if (chMembers) members = chMembers.map(m => ({ ...(m.data || {}), isMe: m.member === deviceId() }));
-  if (!members.some(x => x.isMe)) members.unshift({ nick: state.profile.nick || '나', region: state.profile.region, age: state.profile.age, gender: state.profile.gender, dayTimes: dayTimeMap(), isMe: true });
+  if (!members.some(x => x.isMe)) members.unshift({ nick: state.profile.nick || '나', region: state.profile.region, age: state.profile.age, gender: state.profile.gender, dayTimes: dayTimeMap(), photos: state.dayPhotos || {}, isMe: true });
   const goal = state.settings.weeklyGoal || 3;
   const rows = members.map(m => {
-    const days = []; let total = 0, cnt = 0;
-    for (let i = 0; i < 7; i++) { const d = new Date(ms); d.setDate(d.getDate() + i); const s = (m.dayTimes || {})[todayStr(d)] || 0; days.push(s); if (s > 0) { cnt++; total += s; } }
-    return { ...m, days, cnt, total, done: cnt >= goal };
+    const days = []; let total = 0, cnt = 0, photoCnt = 0, lastPhoto = null;
+    const ph = m.photos || {};
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(ms); d.setDate(d.getDate() + i); const ds = todayStr(d);
+      const s = (m.dayTimes || {})[ds] || 0, p = ph[ds] || null;
+      days.push({ secs: s, photo: p });
+      if (s > 0 || p) { cnt++; total += s; }
+      if (p) { photoCnt++; lastPhoto = p; }
+    }
+    return { ...m, days, cnt, total, photoCnt, lastPhoto, score: cnt + photoCnt, done: cnt >= goal };
   });
-  rows.sort((a, b) => b.cnt - a.cnt || b.total - a.total);
+  rows.sort((a, b) => b.score - a.score || b.total - a.total);
   let rank = 0, prev = null;
-  rows.forEach((r, i) => { const key = `${r.cnt}_${r.total}`; if (key !== prev) { rank = i + 1; prev = key; } r.rank = rank; });
+  rows.forEach((r, i) => { const key = `${r.score}_${r.total}`; if (key !== prev) { rank = i + 1; prev = key; } r.rank = rank; });
   return rows;
 }
 function lbRow(r) {
   const meta = [r.region, r.gender, r.age && r.age + '세'].filter(Boolean).join(' · ');
-  const dots = r.days.map(s => `<i class="${s ? 'on' : ''}"></i>`).join('');
-  return `<div class="lb-row ${r.isMe ? 'me' : ''}">
+  const dots = r.days.map(d => `<i class="${d.secs || d.photo ? 'on' : ''} ${d.photo ? 'ph' : ''}"></i>`).join('');
+  const cam = r.photoCnt ? `📷${r.photoCnt} · ` : '';
+  return `<div class="lb-row ${r.isMe ? 'me' : ''} ${r.photoCnt ? 'haspic' : ''}" ${r.photoCnt ? `data-photo="${r.lastPhoto}"` : ''}>
     <span class="lb-rank ${r.rank <= 3 ? 'top' : ''}">${r.rank}</span>
     <div class="lb-info"><b>${esc(r.nick || '익명')}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</div>
     <div class="lb-week">${dots}</div>
-    <div class="lb-stat"><b>${r.cnt}회</b><small>${fmtHM(r.total) || '0:00'}</small></div>
+    <div class="lb-stat"><b>${r.cnt}회</b><small>${cam}${fmtHM(r.total) || '0:00'}</small></div>
     <span class="cert-badge sm ${r.done ? 'done' : 'miss'}">${r.done ? '✓' : '–'}</span></div>`;
 }
 
@@ -1268,6 +1372,7 @@ function init() {
   // 모달 닫기
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
   document.querySelectorAll('.modal-back').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModal('#' + b.id); }));
+  document.querySelector('#photoview').addEventListener('click', e => { if (e.target.id === 'photoview') closeModal('#photoview'); });
   // 휴식 타이머 버튼
   document.querySelector('#rest-skip').addEventListener('click', stopRest);
   document.querySelector('#rest-plus').addEventListener('click', () => { restLeft += 15; restTotal = Math.max(restTotal, restLeft); drawRest(); });
