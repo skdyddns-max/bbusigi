@@ -1,0 +1,15 @@
+{
+  "name": "운동뿌시기 — 운동 기록",
+  "short_name": "운동뿌시기",
+  "description": "세트·무게·횟수를 빠르게 기록하는 운동 일지 · 그룹 인증 챌린지",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F1115",
+  "theme_color": "#0F1115",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
