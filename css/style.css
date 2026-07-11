@@ -58,8 +58,9 @@ input, select { font-family: inherit; }
 /* ===== 홈 ===== */
 .home-head { padding: 26px 2px 12px; }
 .home-greet { color: var(--muted); font-size: 13px; font-weight: 600; }
-.home-head h1 { font-size: 40px; margin-top: 6px; display: flex; align-items: center; gap: 9px; }
+.home-head h1 { font-size: 40px; margin-top: 6px; display: flex; align-items: center; gap: 10px; }
 .home-head h1 em { font-style: normal; color: var(--text); }
+.brand-logo { width: 42px; height: 42px; flex-shrink: 0; filter: drop-shadow(0 3px 8px rgba(255,98,66,.35)); }
 .tagline { color: var(--muted); margin: 8px 0 0; font-size: 14px; font-weight: 500; }
 .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 16px 0; }
 .mini-stat { border-radius: var(--r); padding: 16px 8px; text-align: center; }

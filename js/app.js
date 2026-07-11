@@ -48,7 +48,7 @@ function renderHome() {
   el.innerHTML = `
     <header class="home-head">
       <span class="kicker">${dateKicker()}</span>
-      <h1><em>${BRAND.name}</em></h1>
+      <h1>${logoSvg()}<em>${BRAND.name}</em></h1>
       <p class="tagline">${streak > 0 ? `🔥 ${streak}일 연속 운동 중이에요!` : '오늘도 가볍게 한 세트 시작해볼까요?'}</p>
     </header>
     <div class="stat-row">
@@ -1330,6 +1330,16 @@ function dateLabel() {
   const d = new Date();
   const w = ['일','월','화','수','목','금','토'][d.getDay()];
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${w})`;
+}
+/* 갈라진 케틀벨 로고 (SVG 인라인) */
+function logoSvg(cls) {
+  return `<svg class="brand-logo ${cls || ''}" viewBox="0 0 100 100" aria-hidden="true">
+    <defs><linearGradient id="kb-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF6242"/><stop offset="1" stop-color="#FF9E6B"/></linearGradient></defs>
+    <path d="M30 47 Q30 14 50 14 Q70 14 70 47" fill="none" stroke="url(#kb-grad)" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="50" cy="66" r="30" fill="url(#kb-grad)"/>
+    <path d="M50 38 L42 55 L56 61 L44 79 L52 96" fill="none" stroke="var(--bg)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
 }
 function dateKicker() {
   const d = new Date();
