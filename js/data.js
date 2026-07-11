@@ -109,7 +109,8 @@ function emptyState() {
     customExercises: [],   // 사용자가 추가한 운동 [{id, part, type, name}]
     routines: [],          // [{id, name, exIds:[...]}]
     sessions: [],          // [{id, date, start, end, secs, entries:[{exId,name,part,type,sets:[{w,r,done,t}]}], note}]
-    body: [],              // [{id, date, weight, chest, waist, arm, thigh, note}]
+    body: [],              // [{id, date, weight, chest, waist, arm, thigh, note}] (미사용)
+    manualDays: {},        // 빠른 인증: {'YYYY-MM-DD': secs} — 세트 없이 시간만 입력
     onboarded: false,      // 첫 사용 온보딩 완료 여부
     settings: { restDefault: 90, weeklyGoal: 3 },
     // account: {code, lastSync}    // 개인 기기 동기화 (sync.js)
@@ -249,6 +250,9 @@ function fmtHM(secs) { if (!secs) return ''; const h = Math.floor(secs / 3600), 
 function dayTimeMap() {
   const m = {};
   state.sessions.forEach(s => { m[s.date] = (m[s.date] || 0) + (s.secs || 0); });
+  // 빠른 인증(수동 입력) 병합 — 세션 합산과 수동 중 큰 값
+  const man = state.manualDays || {};
+  Object.keys(man).forEach(d => { m[d] = Math.max(m[d] || 0, man[d] || 0); });
   return m;
 }
 /* 특정 주(월요일 시작)의 내 인증 요약 */

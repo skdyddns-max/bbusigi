@@ -295,6 +295,18 @@ input, select { font-family: inherit; }
 .cg-cell.on span.we { color: rgba(6,41,31,.72); }
 .cg-cell b { font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .cg-cell.on b { color: var(--mint-ink); }
+.cg-cell.edit { cursor: pointer; }
+.cg-cell.edit:not(.on) b { color: var(--accent); }
+.cg-cell.edit:active { transform: scale(.95); }
+.cg-cell.future { opacity: .4; }
+.cg-tip { text-align: center; color: var(--muted); font-size: 12.5px; margin: 12px 0 2px; }
+.cg-tip b { color: var(--accent); }
+.qd-guide { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 2px 0 14px; }
+.qd-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.qd-chip { padding: 12px 16px; border-radius: 999px; background: var(--card2); border: 1px solid var(--line2); color: var(--text); font-size: 14px; font-weight: 700; }
+.qd-chip.on { background: var(--grad); border-color: transparent; color: #fff; }
+.qd-chip:active { transform: scale(.95); }
+#quickday .big-btn { margin-top: 16px; }
 .cert-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
 .cert-metrics > div { text-align: center; }
 .cert-metrics span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }

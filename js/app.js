@@ -30,7 +30,6 @@ function render() {
   else if (curTab === 'history') renderHistory();
   else if (curTab === 'stats') renderStats();
   else if (curTab === 'challenge') renderChallenge();
-  else if (curTab === 'body') renderBody();
   else if (curTab === 'settings') renderSettings();
 }
 
@@ -921,23 +920,56 @@ function renderChallenge() {
   el.querySelector('#ch-join')?.addEventListener('click', () => (typeof challengeJoin === 'function') && challengeJoin(el.querySelector('#ch-code').value));
   el.querySelector('#ch-refresh')?.addEventListener('click', () => { if (typeof challengePull === 'function') challengePull(); });
   el.querySelector('#ch-leave')?.addEventListener('click', () => (typeof challengeLeave === 'function') && challengeLeave());
+  el.querySelectorAll('.cg-cell[data-day]').forEach(c => c.addEventListener('click', () => openQuickDay(c.dataset.day)));
   animateCounts(el);
   if (joined && typeof challengePull === 'function' && typeof challengeReady === 'function' && challengeReady()) challengePull();
 }
 
 function myCertCard(sum) {
   const dow = ['월', '화', '수', '목', '금', '토', '일'];
-  const cells = sum.days.map((d, i) => `<div class="cg-cell ${d.secs ? 'on' : ''}"><span class="${i >= 5 ? 'we' : ''}">${dow[i]}</span><b>${fmtHM(d.secs) || '·'}</b></div>`).join('');
+  const today = todayStr();
+  const cells = sum.days.map((d, i) => {
+    const editable = d.date <= today;
+    const val = fmtHM(d.secs) || (editable ? '＋' : '·');
+    return `<div class="cg-cell ${d.secs ? 'on' : ''} ${editable ? 'edit' : 'future'}" ${editable ? `data-day="${d.date}"` : ''}>
+      <span class="${i >= 5 ? 'we' : ''}">${dow[i]}</span><b>${val}</b></div>`;
+  }).join('');
   const badge = sum.done ? '<span class="cert-badge done">달성 ✓</span>' : '<span class="cert-badge miss">미달성</span>';
   const pct = Math.min(100, Math.round(sum.workoutDays / sum.goal * 100));
   return `<div class="cert-card">
     <div class="cert-head"><b>${esc(state.profile.nick || '나')}</b>${badge}</div>
     <div class="cg-grid">${cells}</div>
+    <p class="cg-tip">🖐️ 요일을 눌러 <b>바로 인증</b>! (운동시간만 톡 입력)</p>
     <div class="cert-metrics">
       <div><span>운동횟수</span><b data-count="${sum.workoutDays}">0</b><small>/${sum.goal}회</small></div>
       <div><span>운동시간</span><b>${fmtHM(sum.totalSecs) || '0:00'}</b></div>
       <div><span>달성률</span><b data-count="${pct}" data-suf="%">0</b></div>
     </div></div>`;
+}
+
+/* 빠른 인증 — 요일 탭 → 운동시간만 입력 */
+function openQuickDay(ds) {
+  const m = document.querySelector('#quickday');
+  const d = new Date(ds), wd = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+  const cur = (state.manualDays && state.manualDays[ds]) || 0;
+  const presets = [[30, '30분'], [45, '45분'], [60, '1시간'], [90, '1시간 30분'], [120, '2시간']];
+  m.querySelector('.modal-head h3').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 (${wd}) 인증`;
+  m.querySelector('#qd-body').innerHTML = `
+    <p class="qd-guide">이 날 운동한 시간을 눌러 바로 인증하세요.<br>세트로 기록한 시간이 있으면 둘 중 큰 값으로 반영돼요.</p>
+    <div class="qd-presets">${presets.map(p => `<button class="qd-chip ${cur === p[0] * 60 ? 'on' : ''}" data-min="${p[0]}">${p[1]}</button>`).join('')}</div>
+    <label>직접 입력 (분)<input id="qd-custom" type="number" inputmode="numeric" placeholder="예: 75" value="${cur ? Math.round(cur / 60) : ''}"></label>
+    <button id="qd-save" class="big-btn">인증하기</button>
+    ${cur ? '<button id="qd-clear" class="text-btn danger">이 날 인증 지우기</button>' : ''}`;
+  const save = mins => {
+    if (!state.manualDays) state.manualDays = {};
+    if (mins > 0) state.manualDays[ds] = mins * 60; else delete state.manualDays[ds];
+    saveState(); closeModal('#quickday'); renderChallenge();
+    toast(mins > 0 ? '인증 완료! 💪' : '인증을 지웠어요');
+  };
+  m.querySelectorAll('.qd-chip').forEach(b => b.addEventListener('click', () => save(+b.dataset.min)));
+  m.querySelector('#qd-save').addEventListener('click', () => save(parseInt(m.querySelector('#qd-custom').value) || 0));
+  m.querySelector('#qd-clear')?.addEventListener('click', () => save(0));
+  openModal('#quickday');
 }
 
 function groupSection(joined, ms) {
