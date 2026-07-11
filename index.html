@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
   <title>운동뿌시기 — 운동 기록</title>
   <meta name="description" content="세트·무게·횟수를 탭탭탭으로 빠르게 기록하는 운동 일지. 루틴·휴식타이머·성장 그래프·그룹 인증 챌린지.">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#14171E">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -14,6 +14,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="운동뿌시기">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -39,6 +42,13 @@
 
   <!-- 개인기록(PR) 축하 팝업 -->
   <div id="pr-pop"></div>
+
+  <!-- 첫 사용 온보딩 -->
+  <div id="welcome" class="modal-back" hidden>
+    <div class="modal welcome-modal">
+      <div id="wc-body" class="modal-body"></div>
+    </div>
+  </div>
 
   <!-- 휴식 타이머 -->
   <div id="rest-overlay" hidden>

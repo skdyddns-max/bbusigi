@@ -110,6 +110,7 @@ function emptyState() {
     routines: [],          // [{id, name, exIds:[...]}]
     sessions: [],          // [{id, date, start, end, secs, entries:[{exId,name,part,type,sets:[{w,r,done,t}]}], note}]
     body: [],              // [{id, date, weight, chest, waist, arm, thigh, note}]
+    onboarded: false,      // 첫 사용 온보딩 완료 여부
     settings: { restDefault: 90, weeklyGoal: 3 },
     // account: {code, lastSync}    // 개인 기기 동기화 (sync.js)
     // challenge: {code, joinedAt}  // 그룹 운동 인증 챌린지 (sync.js)

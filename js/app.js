@@ -50,7 +50,7 @@ function renderHome() {
     <header class="home-head">
       <span class="kicker">${dateKicker()}</span>
       <h1><em>${BRAND.name}</em></h1>
-      <p class="tagline">${streak > 0 ? `🔥 ${streak}일 연속 운동 중이에요` : '오늘도 한 세트 더 — JUST TRAIN.'}</p>
+      <p class="tagline">${streak > 0 ? `🔥 ${streak}일 연속 운동 중이에요!` : '오늘도 가볍게 한 세트 시작해볼까요?'}</p>
     </header>
     <div class="stat-row">
       <div class="mini-stat"><i>🏋️</i><b data-count="${state.sessions.length}">0</b><span>총 운동</span></div>
@@ -66,7 +66,7 @@ function renderHome() {
         <div><span>지난주</span><b data-count="${lwv}">0</b>kg</div>
       </div>
     </div>
-    <button id="btn-start" class="big-btn">＋ 빈 운동 시작<span class="sub">Start Workout</span></button>
+    <button id="btn-start" class="big-btn">＋ 운동 시작하기<span class="sub">운동을 고르며 바로 기록해요</span></button>
     ${rt.length ? `<h3 class="sec-title">루틴으로 시작</h3><div class="routine-quick">${
       rt.map(r => `<button class="rq-btn" data-rt="${r.id}"><b>${esc(r.name)}</b><span>${r.exIds.length}개 운동</span></button>`).join('')
     }</div>` : `<p class="hint">자주 하는 운동을 <b>루틴</b>으로 묶으면 여기서 한 번에 시작할 수 있어요.</p>`}
@@ -988,45 +988,45 @@ function shareCertImage(sum) {
   const x = cv.getContext('2d'); x.scale(dpr, dpr);
   const rr = (a, b, c, d, r) => { x.beginPath(); if (x.roundRect) x.roundRect(a, b, c, d, r); else x.rect(a, b, c, d); };
   const LS = v => { if ('letterSpacing' in x) x.letterSpacing = v; };
-  // 배경 — 트루 블랙 + 얇은 보더
-  rr(0, 0, W, H, 20); x.fillStyle = '#0A0A0A'; x.fill();
-  x.lineWidth = 1; x.strokeStyle = 'rgba(255,255,255,0.10)'; rr(0.5, 0.5, W - 1, H - 1, 20); x.stroke();
-  // 키커 (대문자 오렌지)
-  x.fillStyle = '#FF4A1C'; x.font = '800 13px Pretendard, sans-serif'; LS('3px');
-  x.fillText('WEEKLY CERTIFICATION', 34, 54); LS('0px');
+  const DISP = w => `${w}px "Do Hyeon", Pretendard, sans-serif`;
+  // 배경 — 따뜻한 다크 + 얇은 보더
+  rr(0, 0, W, H, 22); x.fillStyle = '#1E2330'; x.fill();
+  x.lineWidth = 1; x.strokeStyle = 'rgba(255,255,255,0.08)'; rr(0.5, 0.5, W - 1, H - 1, 22); x.stroke();
+  // 키커 (코랄)
+  x.fillStyle = '#FF7A59'; x.font = '700 14px Pretendard, sans-serif'; x.fillText('주간 운동 인증', 34, 54);
   // 타이틀
-  x.fillStyle = '#fff'; x.font = '900 32px Pretendard'; x.fillText('운동 인증', 34, 92);
-  x.fillStyle = '#8A8A8A'; x.font = '600 14px Pretendard'; x.fillText(weekRangeLabel(sum.start), 34, 118);
+  x.fillStyle = '#fff'; x.font = DISP(34); x.fillText('운동 인증', 34, 94);
+  x.fillStyle = '#9AA3B2'; x.font = '600 14px Pretendard'; x.fillText(weekRangeLabel(sum.start), 34, 120);
   // 닉네임
-  x.fillStyle = '#fff'; x.font = '900 26px Pretendard'; x.fillText(state.profile.nick || '나', 34, 162);
-  // 스탬프 (달성=볼트, 미달성=회색 아웃라인)
-  const sx = 566, sy = 90, sr = 44;
+  x.fillStyle = '#fff'; x.font = DISP(27); x.fillText(state.profile.nick || '나', 34, 164);
+  // 스탬프 (달성=민트, 미달성=회색 아웃라인)
+  const sx = 566, sy = 92, sr = 44;
   x.beginPath(); x.arc(sx, sy, sr, 0, Math.PI * 2);
-  if (sum.done) { x.fillStyle = '#C2FF1F'; x.fill(); x.fillStyle = '#1A2100'; }
-  else { x.lineWidth = 3; x.strokeStyle = '#4A4A4A'; x.stroke(); x.fillStyle = '#8A8A8A'; }
-  x.font = '900 19px Pretendard'; x.textAlign = 'center'; x.fillText(sum.done ? '달성' : '미달성', sx, sy + 7); x.textAlign = 'left';
-  // 요일 그리드 (운동한 날=볼트)
-  const dow = ['월', '화', '수', '목', '금', '토', '일']; const gx = 34, gy = 196, cw = (W - 68) / 7, chh = 94;
+  if (sum.done) { x.fillStyle = '#5BE0B0'; x.fill(); x.fillStyle = '#06291F'; }
+  else { x.lineWidth = 3; x.strokeStyle = '#4A5162'; x.stroke(); x.fillStyle = '#9AA3B2'; }
+  x.font = DISP(20); x.textAlign = 'center'; x.fillText(sum.done ? '달성' : '미달성', sx, sy + 7); x.textAlign = 'left';
+  // 요일 그리드 (운동한 날=민트)
+  const dow = ['월', '화', '수', '목', '금', '토', '일']; const gx = 34, gy = 198, cw = (W - 68) / 7, chh = 94;
   for (let i = 0; i < 7; i++) {
     const cx = gx + i * cw, on = sum.days[i].secs > 0;
-    rr(cx + 3, gy, cw - 6, chh, 10); x.fillStyle = on ? '#C2FF1F' : '#161616'; x.fill();
+    rr(cx + 3, gy, cw - 6, chh, 12); x.fillStyle = on ? '#5BE0B0' : '#2A303E'; x.fill();
     x.textAlign = 'center';
-    x.fillStyle = on ? 'rgba(26,33,0,0.65)' : (i >= 5 ? '#FF4A1C' : '#7A7A7A'); x.font = '800 13px Pretendard'; x.fillText(dow[i], cx + cw / 2, gy + 28);
-    x.fillStyle = on ? '#1A2100' : '#565656'; x.font = '900 16px Pretendard'; x.fillText(fmtHM(sum.days[i].secs) || '·', cx + cw / 2, gy + 62);
+    x.fillStyle = on ? 'rgba(6,41,31,0.62)' : (i >= 5 ? '#FF7A59' : '#8A93A3'); x.font = '700 13px Pretendard'; x.fillText(dow[i], cx + cw / 2, gy + 28);
+    x.fillStyle = on ? '#06291F' : '#5E6675'; x.font = DISP(17); x.fillText(fmtHM(sum.days[i].secs) || '·', cx + cw / 2, gy + 63);
   }
   x.textAlign = 'left';
   // 지표 — 흰색 대형 숫자
-  const my = 322, mw = (W - 68) / 3;
+  const my = 324, mw = (W - 68) / 3;
   const metrics = [['운동횟수', `${sum.workoutDays}/${sum.goal}회`], ['운동시간', fmtHM(sum.totalSecs) || '0:00'], ['달성률', Math.min(100, Math.round(sum.workoutDays / sum.goal * 100)) + '%']];
   metrics.forEach((mm, i) => {
     const mx = 34 + i * mw;
-    rr(mx + 3, my, mw - 6, 76, 12); x.fillStyle = '#161616'; x.fill();
-    x.textAlign = 'center'; x.fillStyle = '#8A8A8A'; x.font = '700 12px Pretendard'; x.fillText(mm[0], mx + mw / 2, my + 28);
-    x.fillStyle = '#fff'; x.font = '900 25px Pretendard'; x.fillText(mm[1], mx + mw / 2, my + 60);
+    rr(mx + 3, my, mw - 6, 74, 13); x.fillStyle = '#2A303E'; x.fill();
+    x.textAlign = 'center'; x.fillStyle = '#9AA3B2'; x.font = '600 12px Pretendard'; x.fillText(mm[0], mx + mw / 2, my + 27);
+    x.fillStyle = '#fff'; x.font = DISP(25); x.fillText(mm[1], mx + mw / 2, my + 58);
   });
   // 워터마크
-  x.textAlign = 'right'; x.fillStyle = '#5A5A5A'; x.font = '800 12px Pretendard'; LS('2px');
-  x.fillText(BRAND.name, W - 34, H - 20); LS('0px'); x.textAlign = 'left';
+  x.textAlign = 'right'; x.fillStyle = '#5E6675'; x.font = '700 12px Pretendard';
+  x.fillText('💪 ' + BRAND.name, W - 34, H - 20); x.textAlign = 'left';
   cv.toBlob(async blob => {
     if (!blob) { alert('이미지 생성에 실패했어요.'); return; }
     const file = new File([blob], `repbloom-인증-${sum.start}.png`, { type: 'image/png' });
@@ -1242,7 +1242,30 @@ function init() {
   document.querySelector('#rest-minus').addEventListener('click', () => { restLeft = Math.max(1, restLeft - 15); drawRest(); });
   setInterval(tickLive, 1000);
   switchTab('home');
+  // 첫 사용 온보딩
+  if (!state.onboarded) setTimeout(showWelcome, 400);
   // 서비스워커
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+/* 첫 사용 환영 온보딩 */
+function showWelcome() {
+  const m = document.querySelector('#welcome');
+  m.querySelector('#wc-body').innerHTML = `
+    <div class="wc-hero">
+      <span class="wc-emoji">💪</span>
+      <h2>운동뿌시기에 오신 걸 환영해요!</h2>
+      <p>운동을 기록하고, 성장을 눈으로 확인하고,<br>친구들과 함께 인증하는 앱이에요.</p>
+    </div>
+    <div class="wc-steps">
+      <div class="wc-step"><span class="wc-num">1</span><div><b>운동 시작하기</b><span>홈에서 버튼을 눌러 운동을 골라요</span></div><span class="wc-ic">🏋️</span></div>
+      <div class="wc-step"><span class="wc-num">2</span><div><b>세트마다 체크</b><span>무게·횟수 입력 후 오른쪽 체크를 탭!</span></div><span class="wc-ic">✅</span></div>
+      <div class="wc-step"><span class="wc-num">3</span><div><b>기록·통계·챌린지</b><span>성장 그래프와 친구 인증까지</span></div><span class="wc-ic">🏅</span></div>
+    </div>
+    <button id="wc-start" class="big-btn">시작하기</button>`;
+  m.querySelector('#wc-start').addEventListener('click', () => {
+    state.onboarded = true; saveState(); closeModal('#welcome');
+  });
+  openModal('#welcome');
 }
 document.addEventListener('DOMContentLoaded', init);
